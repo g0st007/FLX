@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   build:
-    name: Build and test
+    name: Build, test and launch APK
     runs-on: ubuntu-latest
 
     steps:
@@ -44,13 +44,29 @@ jobs:
             gradle wrapper --no-daemon
           fi
 
-      - name: Build release APK (rápida, optimizada)
+      - name: Build release APK
         run: ./gradlew --no-daemon assembleRelease
+
+      - name: Install and launch release APK in emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_2
+          script: |
+            adb install app/build/outputs/apk/release/app-release.apk
+            adb logcat -c
+            adb shell am start -W -n app.flux.downloader/.MainActivity
+            sleep 10
+            if ! adb shell pidof app.flux.downloader; then
+              adb logcat -d -v time
+              exit 1
+            fi
 
       - name: Run unit tests
         run: ./gradlew --no-daemon testDebugUnitTest
 
-      - name: Upload debug APK
+      - name: Upload release APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
