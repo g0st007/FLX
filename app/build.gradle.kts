@@ -21,8 +21,8 @@ android {
         release {
             // La versión "release" es mucho más rápida que la debug (en Compose la diferencia es enorme).
             // Si algo se rompiera al abrirla, poner isMinifyEnabled = false como salida de emergencia.
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             // Firmada con la clave debug para poder instalarla directamente mientras es versión en progreso.
             signingConfig = signingConfigs.getByName("debug")
