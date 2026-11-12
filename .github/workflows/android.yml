@@ -47,29 +47,28 @@ jobs:
       - name: Build release APK
         run: ./gradlew --no-daemon assembleRelease
 
+      - name: Run unit tests
+        run: ./gradlew --no-daemon testDebugUnitTest
+
       - name: Install and launch release APK in emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
           arch: x86_64
           profile: pixel_2
+          disable-animations: true
           script: |
-            adb install app/build/outputs/apk/release/app-release.apk
+            adb install -r app/build/outputs/apk/release/app-release.apk
             adb logcat -c
-            adb shell am start -W -n app.flux.downloader/.MainActivity
+            adb shell am force-stop app.flux.downloader
+            adb shell am start -W -n app.flux.downloader/.MainActivity || true
             sleep 10
-            if ! adb shell pidof app.flux.downloader; then
-              adb logcat -d -v time
-              exit 1
-            fi
-
-      - name: Run unit tests
-        run: ./gradlew --no-daemon testDebugUnitTest
+            adb shell pidof app.flux.downloader >/dev/null 2>&1 || { echo "La app se cerró o no arrancó; mostrando Logcat"; adb logcat -d -v time -t 2000; exit 1; }
 
       - name: Upload release APK
-        if: success()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: flux-release-apk
           path: app/build/outputs/apk/release/*.apk
-          if-no-files-found: error
+          if-no-files-found: ignore
